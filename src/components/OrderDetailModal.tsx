@@ -407,17 +407,45 @@ ${order.credential.loginUrl ? `Login: ${order.credential.loginUrl}\n` : ''}${ord
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between">
-          <div className="text-[11px] text-slate-500">
-            Dibuat: {formatDateIndo(order.orderDate)}
+        {/* Footer with Edit, Delete & Close actions */}
+        <div className="px-6 py-4 border-t border-slate-800 bg-slate-950/80 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-2">
+            {/* Delete button in detail modal */}
+            <button
+              onClick={() => {
+                onDelete(order.id);
+                onClose();
+              }}
+              className="px-4 py-2 bg-rose-600/10 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Hapus Pesanan</span>
+            </button>
+
+            {/* Edit button in detail modal */}
+            <button
+              onClick={() => {
+                onEdit(order);
+                onClose();
+              }}
+              className="px-4 py-2 bg-sky-600/10 hover:bg-sky-600 text-sky-300 hover:text-white border border-sky-500/30 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>Edit Pesanan</span>
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-colors"
-          >
-            Tutup
-          </button>
+
+          <div className="flex items-center space-x-3">
+            <span className="text-[11px] text-slate-500 hidden sm:inline">
+              Dibuat: {formatDateIndo(order.orderDate)}
+            </span>
+            <button
+              onClick={onClose}
+              className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-colors"
+            >
+              Tutup
+            </button>
+          </div>
         </div>
       </div>
     </div>

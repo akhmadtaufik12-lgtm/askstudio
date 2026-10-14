@@ -5,6 +5,7 @@ import { OrderList } from './components/OrderList';
 import { ChromeBrowser } from './components/ChromeBrowser';
 import { OrderFormModal } from './components/OrderFormModal';
 import { OrderDetailModal } from './components/OrderDetailModal';
+import { DeleteConfirmModal } from './components/DeleteConfirmModal';
 import { AnalyticsView } from './components/AnalyticsView';
 import { Order } from './types';
 import { INITIAL_ORDERS } from './data/initialOrders';
@@ -52,6 +53,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'orders' | 'browser' | 'analytics'>('orders');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedOrderForPrompt, setSelectedOrderForPrompt] = useState<Order | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -304,7 +306,7 @@ export default function App() {
                 setEditingOrder(order);
                 setIsFormOpen(true);
               }}
-              onDeleteOrder={handleDeleteOrder}
+              onDeleteOrder={(order) => setDeletingOrder(order)}
               onOpenInAiStudio={handleOpenInAiStudio}
               onAddNew={() => {
                 setEditingOrder(null);
@@ -380,8 +382,19 @@ export default function App() {
           setEditingOrder(order);
           setIsFormOpen(true);
         }}
-        onDelete={handleDeleteOrder}
+        onDelete={(orderId) => {
+          const ord = orders.find(o => o.id === orderId);
+          if (ord) setDeletingOrder(ord);
+        }}
         onOpenInAiStudio={handleOpenInAiStudio}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        order={deletingOrder}
+        isOpen={!!deletingOrder}
+        onClose={() => setDeletingOrder(null)}
+        onConfirm={handleDeleteOrder}
       />
 
       {/* Footer */}

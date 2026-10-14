@@ -1,35 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
-  Filter,
   Key,
   Copy,
   Check,
   Eye,
   EyeOff,
-  ExternalLink,
   Sparkles,
-  Calendar,
   Clock,
   Laptop,
   CheckCircle2,
-  AlertCircle,
   MoreVertical,
   Plus,
-  ArrowUpDown,
   LayoutGrid,
   List,
-  User,
-  ShieldCheck
+  Edit3,
+  Trash2,
+  FileText,
+  ExternalLink
 } from 'lucide-react';
-import { Order, OrderStatus, ProjectType } from '../types';
+import { Order, OrderStatus } from '../types';
 import { formatRupiah, formatDateIndo, getDaysRemaining } from '../utils/formatters';
 
 interface OrderListProps {
   orders: Order[];
   onSelectOrder: (order: Order) => void;
   onEditOrder: (order: Order) => void;
-  onDeleteOrder: (orderId: string) => void;
+  onDeleteOrder: (order: Order) => void;
   onOpenInAiStudio: (order: Order) => void;
   onAddNew: () => void;
 }
@@ -47,6 +44,20 @@ export const OrderList: React.FC<OrderListProps> = ({
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close open dropdown menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const togglePasswordVisibility = (orderId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -62,6 +73,11 @@ export const OrderList: React.FC<OrderListProps> = ({
     navigator.clipboard.writeText(text);
     setCopiedId(order.id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const toggleDropdownMenu = (orderId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpenMenuId(openMenuId === orderId ? null : orderId);
   };
 
   const filteredOrders = orders.filter((order) => {
@@ -227,21 +243,24 @@ export const OrderList: React.FC<OrderListProps> = ({
           {filteredOrders.map((order) => {
             const isPasswordRevealed = revealedPasswords[order.id];
             const isCopied = copiedId === order.id;
-            const daysInfo = getDaysRemaining(order.deadlineDate);
+            const isMenuOpen = openMenuId === order.id;
 
             return (
               <div
                 key={order.id}
                 onClick={() => onSelectOrder(order)}
-                className="bg-slate-900 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4.5 flex flex-col justify-between transition-all hover:shadow-xl hover:-translate-y-0.5 cursor-pointer group relative overflow-hidden"
+                className="bg-slate-900 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-4.5 flex flex-col justify-between transition-all hover:shadow-xl hover:-translate-y-0.5 cursor-pointer group relative overflow-visible"
               >
-                {/* Top: App Name & Status */}
+                {/* Top: App Name & Actions Dropdown Menu */}
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex-1">
-                      <span className="text-[10px] font-mono text-slate-500 block mb-0.5">
-                        {order.id}
-                      </span>
+                      <div className="flex items-center space-x-2 mb-0.5">
+                        <span className="text-[10px] font-mono text-slate-500">
+                          {order.id}
+                        </span>
+                        {getStatusBadge(order.status)}
+                      </div>
                       <h3 className="text-base font-bold text-slate-100 group-hover:text-sky-300 transition-colors line-clamp-1">
                         {order.appName}
                       </h3>
@@ -249,7 +268,102 @@ export const OrderList: React.FC<OrderListProps> = ({
                         {order.projectType}
                       </p>
                     </div>
-                    <div>{getStatusBadge(order.status)}</div>
+
+                    {/* Dedicated Edit & Delete Actions (Dropdown Menu) */}
+                    <div className="relative shrink-0" ref={isMenuOpen ? menuRef : null}>
+                      <div className="flex items-center space-x-1">
+                        {/* Quick Edit Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditOrder(order);
+                          }}
+                          className="p-1.5 bg-slate-800/80 hover:bg-sky-600 text-slate-300 hover:text-white rounded-lg transition-colors border border-slate-700"
+                          title="Edit Pesanan Ini"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Quick Delete Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteOrder(order);
+                          }}
+                          className="p-1.5 bg-slate-800/80 hover:bg-rose-600 text-slate-300 hover:text-white rounded-lg transition-colors border border-slate-700"
+                          title="Hapus Pesanan Ini"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* 3-dots Menu Button */}
+                        <button
+                          onClick={(e) => toggleDropdownMenu(order.id, e)}
+                          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                          title="Menu opsi lainnya"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Dropdown Menu Popup */}
+                      {isMenuOpen && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="absolute right-0 top-8 z-30 w-48 bg-slate-950 border border-slate-700 rounded-xl shadow-2xl p-1.5 space-y-1 animate-in fade-in duration-150"
+                        >
+                          <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800">
+                            Menu Pesanan
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              onEditOrder(order);
+                            }}
+                            className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs text-sky-300 hover:bg-sky-950/60 rounded-lg font-medium transition-colors"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            <span>Edit Pesanan</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              onDeleteOrder(order);
+                            }}
+                            className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/60 rounded-lg font-medium transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Hapus Pesanan</span>
+                          </button>
+
+                          <div className="border-t border-slate-800 my-1" />
+
+                          <button
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              onSelectOrder(order);
+                            }}
+                            className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition-colors"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Lihat Detail & Akun</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              onOpenInAiStudio(order);
+                            }}
+                            className="w-full flex items-center space-x-2 px-2.5 py-1.5 text-xs text-indigo-300 hover:bg-indigo-950/60 rounded-lg transition-colors"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Buka di AI Studio</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Client Info Pill */}
@@ -337,18 +451,31 @@ export const OrderList: React.FC<OrderListProps> = ({
                     {formatRupiah(order.totalPrice)}
                   </div>
 
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1.5">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onOpenInAiStudio(order);
+                        onEditOrder(order);
                       }}
-                      className="px-2.5 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 hover:text-indigo-100 border border-indigo-500/40 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors"
-                      title="Buka pesanan ini di workspace AI Studio"
+                      className="px-2.5 py-1.5 bg-sky-600/20 hover:bg-sky-600 text-sky-300 hover:text-white border border-sky-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors"
+                      title="Edit Pesanan"
                     >
-                      <Sparkles className="w-3 h-3 text-amber-400" />
-                      <span>AI Studio</span>
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
                     </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteOrder(order);
+                      }}
+                      className="px-2.5 py-1.5 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors"
+                      title="Hapus Pesanan"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus</span>
+                    </button>
+
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -377,7 +504,7 @@ export const OrderList: React.FC<OrderListProps> = ({
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Biaya & Pembayaran</th>
                   <th className="px-4 py-3">Deadline</th>
-                  <th className="px-4 py-3 text-right">Aksi</th>
+                  <th className="px-4 py-3 text-right">Menu Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
@@ -440,6 +567,31 @@ export const OrderList: React.FC<OrderListProps> = ({
 
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end space-x-1.5">
+                          {/* Direct Edit Button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditOrder(order);
+                            }}
+                            className="p-1.5 bg-sky-600/20 hover:bg-sky-600 text-sky-300 hover:text-white rounded-lg transition-colors border border-sky-500/30"
+                            title="Edit Pesanan"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Direct Delete Button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteOrder(order);
+                            }}
+                            className="p-1.5 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded-lg transition-colors border border-rose-500/30"
+                            title="Hapus Pesanan"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* AI Studio */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -450,6 +602,7 @@ export const OrderList: React.FC<OrderListProps> = ({
                           >
                             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                           </button>
+
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
