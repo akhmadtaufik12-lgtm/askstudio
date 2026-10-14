@@ -1,0 +1,6 @@
+{
+  "name": "DevOrder - Manajemen Pemesanan Aplikasi & Web",
+  "description": "Aplikasi manajemen pemesanan pembuatan aplikasi dan website, data login pemesan, dan browser workspace Google AI Studio Apps terintegrasi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

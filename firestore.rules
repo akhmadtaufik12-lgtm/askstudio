@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidOrder(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.ownerId is string && data.ownerId == request.auth.uid
+        && data.clientName is string && data.clientName.size() > 0 && data.clientName.size() <= 150
+        && data.appName is string && data.appName.size() > 0 && data.appName.size() <= 150
+        && data.projectType is string && data.projectType.size() <= 100
+        && data.status in ['baru', 'pengerjaan', 'revisi', 'selesai', 'dibatalkan']
+        && data.paymentStatus in ['belum_bayar', 'dp', 'lunas']
+        && (data.totalPrice is number && data.totalPrice >= 0)
+        && (data.paidAmount is number && data.paidAmount >= 0)
+        && (data.credential is map)
+        && (data.credential.email is string && data.credential.email.size() <= 200)
+        && (data.credential.password is string && data.credential.password.size() <= 200);
+    }
+
+    // Orders Collection
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      
+      allow create: if isSignedIn() 
+        && isValidId(orderId) 
+        && isValidOrder(incoming());
+        
+      allow update: if isSignedIn() 
+        && existing().ownerId == request.auth.uid 
+        && incoming().ownerId == existing().ownerId 
+        && isValidOrder(incoming());
+        
+      allow delete: if isSignedIn() 
+        && existing().ownerId == request.auth.uid;
+    }
+
+    // Test Connection Path
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

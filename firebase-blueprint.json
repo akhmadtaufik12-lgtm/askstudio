@@ -1,0 +1,108 @@
+{
+  "entities": {
+    "Order": {
+      "title": "Order",
+      "description": "Pesanan pembuatan aplikasi atau website dari klien beserta kredensial akun.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID unik pesanan"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID pemilik pesanan (developer)"
+        },
+        "clientName": {
+          "type": "string",
+          "description": "Nama klien pemesan",
+          "maxLength": 100
+        },
+        "clientPhone": {
+          "type": "string",
+          "description": "Nomor WhatsApp atau telepon klien",
+          "maxLength": 30
+        },
+        "clientCompany": {
+          "type": "string",
+          "description": "Nama perusahaan atau bisnis klien",
+          "maxLength": 150
+        },
+        "appName": {
+          "type": "string",
+          "description": "Nama aplikasi atau web yang dipesan",
+          "maxLength": 150
+        },
+        "projectType": {
+          "type": "string",
+          "description": "Kategori atau jenis proyek",
+          "maxLength": 80
+        },
+        "description": {
+          "type": "string",
+          "description": "Deskripsi kebutuhan proyek",
+          "maxLength": 2000
+        },
+        "featureList": {
+          "type": "array",
+          "description": "Daftar fitur aplikasi"
+        },
+        "credential": {
+          "type": "object",
+          "description": "Email dan password pemesan serta kredensial akses"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["baru", "pengerjaan", "revisi", "selesai", "dibatalkan"]
+        },
+        "paymentStatus": {
+          "type": "string",
+          "enum": ["belum_bayar", "dp", "lunas"]
+        },
+        "totalPrice": {
+          "type": "number",
+          "description": "Total biaya proyek dalam Rupiah"
+        },
+        "paidAmount": {
+          "type": "number",
+          "description": "Nominal pembayaran yang sudah diterima (DP)"
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "Tanggal pemesanan (YYYY-MM-DD)"
+        },
+        "deadlineDate": {
+          "type": "string",
+          "description": "Target tenggat waktu selesai (YYYY-MM-DD)"
+        },
+        "demoUrl": {
+          "type": "string",
+          "description": "Link demo preview aplikasi"
+        },
+        "repoUrl": {
+          "type": "string",
+          "description": "Link repositori GitHub atau Git"
+        },
+        "aiStudioNotes": {
+          "type": "string",
+          "description": "Catatan khusus prompt Google AI Studio"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Timestamp pembuatan data"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Timestamp pembaruan data"
+        }
+      },
+      "required": ["id", "clientName", "appName", "projectType", "credential", "status", "paymentStatus", "totalPrice"]
+    }
+  },
+  "firestore": {
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Koleksi data pesanan aplikasi dan kredensial pemesan"
+    }
+  }
+}
